@@ -1,0 +1,2298 @@
+openapi: 3.0.3
+info:
+  title: Assayline
+  version: 0.1.0
+  description: >-
+    Validation factory operating system for bank model risk functions. Assayline
+    determines whether an artefact is a model, refuses a validation slot to an
+    incomplete submission, sizes validation depth to the model's tier, enforces
+    independence, and turns conservatism inside approved models into an explicit,
+    priced register that senior management can reduce deliberately.
+  x-product-slug: ai-cyber-assayline
+  x-source: ai-in-cyber/The-evolution-of-model-risk-management/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Inventory
+    description: Artefact determinations and the model estate boundary
+  - name: Tiering
+    description: Materiality-based tier assessments and criteria
+  - name: Submissions
+    description: Completeness gate, returns, and slot eligibility
+  - name: Validation
+    description: Calendar, engagements, tasks, and work placement
+  - name: Findings
+    description: Severity-graded findings and automatic use constraints
+  - name: Conservatism
+    description: Explicit conservatism overlays and estate aggregation
+  - name: Use
+    description: Permitted-use records and committee exceptions
+  - name: Monitoring
+    description: Owner obligations, breaches, and revalidation triggers
+  - name: Quantification
+    description: Model risk quantification against appetite and buffers
+  - name: Supervisory
+    description: Capital add-ons, remediation, and examination packs
+paths:
+  /v1/artefacts:
+    get:
+      operationId: listArtefacts
+      tags: [Inventory]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: determination
+          in: query
+          schema:
+            type: string
+            enum: [model, not_model, pending]
+      responses:
+        "200":
+          description: Candidate artefacts page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeArtefact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: registerArtefact
+      tags: [Inventory]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtefactCreate"
+      responses:
+        "201":
+          description: Artefact registered pending determination
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeArtefact"
+  /v1/artefacts/{artefactId}/determination:
+    parameters:
+      - $ref: "#/components/parameters/ArtefactId"
+    post:
+      operationId: determineArtefact
+      tags: [Inventory]
+      description: >-
+        Record a dated model-or-not determination against published criteria.
+        An inventory whose boundary is undocumented cannot support capital
+        quantification or supervisory challenge.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelDeterminationCreate"
+      responses:
+        "201":
+          description: Determination recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeModelDetermination"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+  /v1/models:
+    get:
+      operationId: listModels
+      tags: [Inventory]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [inventory, queued, in_validation, approved, constrained, retired]
+      responses:
+        "200":
+          description: Model inventory page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeModel"
+  /v1/models/{modelId}:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    get:
+      operationId: getModel
+      tags: [Inventory]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Model with current tier and permitted use summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeModel"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/models/{modelId}/tier-assessments:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    get:
+      operationId: listTierAssessments
+      tags: [Tiering]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Tier history for the model
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeTierAssessment"
+    post:
+      operationId: assessModelTier
+      tags: [Tiering]
+      description: >-
+        Set tier from materiality, potential financial loss, parameter
+        uncertainty, regulatory impact, and intended use. Tier selects the
+        validation playbook.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TierAssessmentCreate"
+      responses:
+        "201":
+          description: Tier assessment recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeTierAssessment"
+  /v1/tier-criteria:
+    get:
+      operationId: getTierCriteria
+      tags: [Tiering]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Published tiering criteria owned by the control unit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeTierCriteria"
+    put:
+      operationId: updateTierCriteria
+      tags: [Tiering]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TierCriteria"
+      responses:
+        "200":
+          description: Criteria updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeTierCriteria"
+  /v1/submissions:
+    get:
+      operationId: listSubmissions
+      tags: [Submissions]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [received, gapped, returned, accepted]
+        - name: submittingFunction
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submissions page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeSubmission"
+    post:
+      operationId: createSubmission
+      tags: [Submissions]
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionCreate"
+      responses:
+        "201":
+          description: Submission received and completeness-checked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeSubmission"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+  /v1/submissions/{submissionId}/completeness-check:
+    parameters:
+      - $ref: "#/components/parameters/SubmissionId"
+    post:
+      operationId: checkSubmissionCompleteness
+      tags: [Submissions]
+      description: >-
+        Re-run the published completeness standard. Incomplete submissions
+        do not receive a validation slot; returns are attributed to the
+        submitting function with missing components named.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Completeness result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeSubmission"
+  /v1/submissions/{submissionId}/return:
+    parameters:
+      - $ref: "#/components/parameters/SubmissionId"
+    post:
+      operationId: returnSubmission
+      tags: [Submissions]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionReturnCreate"
+      responses:
+        "200":
+          description: Submission returned with attribution
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeSubmission"
+  /v1/validation/slots:
+    get:
+      operationId: listValidationSlots
+      tags: [Validation]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, allocated, deferred, released]
+      responses:
+        "200":
+          description: Validation calendar slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeValidationSlot"
+    post:
+      operationId: allocateValidationSlot
+      tags: [Validation]
+      description: >-
+        Allocate a slot only when the submission is accepted. Refuses allocation
+        for gapped or returned submissions.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidationSlotAllocate"
+      responses:
+        "201":
+          description: Slot allocated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeValidationSlot"
+        "409":
+          description: Submission not accepted or capacity unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /v1/validation/engagements:
+    get:
+      operationId: listValidationEngagements
+      tags: [Validation]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: modelId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planned, in_progress, completed, aborted]
+      responses:
+        "200":
+          description: Validation engagements page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeValidationEngagement"
+    post:
+      operationId: createValidationEngagement
+      tags: [Validation]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidationEngagementCreate"
+      responses:
+        "201":
+          description: Engagement created with tiered playbook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeValidationEngagement"
+        "403":
+          description: Independence separation would be violated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /v1/validation/engagements/{engagementId}/tasks:
+    parameters:
+      - $ref: "#/components/parameters/EngagementId"
+    get:
+      operationId: listValidationTasks
+      tags: [Validation]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Tasks for the engagement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeValidationTask"
+    post:
+      operationId: placeValidationTask
+      tags: [Validation]
+      description: >-
+        Route a decomposable task onshore, offshore, or externally with a
+        recorded data-sensitivity basis and unit cost.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidationTaskCreate"
+      responses:
+        "201":
+          description: Task placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeValidationTask"
+  /v1/validation/capacity-forecast:
+    get:
+      operationId: getCapacityForecast
+      tags: [Validation]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: horizonQuarters
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 8
+            default: 4
+      responses:
+        "200":
+          description: Estate growth set against validator capacity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeCapacityForecast"
+  /v1/findings:
+    get:
+      operationId: listFindings
+      tags: [Findings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: modelId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, constrained, closed]
+        - name: minSeverity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        "200":
+          description: Findings page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeFinding"
+    post:
+      operationId: raiseFinding
+      tags: [Findings]
+      description: >-
+        Raise a severity-graded finding. Above the configured severity for the
+        model's tier, permitted use is automatically restricted until closure.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindingCreate"
+      responses:
+        "201":
+          description: Finding raised; use constraint may be applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeFinding"
+  /v1/findings/{findingId}/close:
+    parameters:
+      - $ref: "#/components/parameters/FindingId"
+    post:
+      operationId: closeFinding
+      tags: [Findings]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [closureRationale]
+              properties:
+                closureRationale:
+                  type: string
+                releaseConstraint:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: Finding closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeFinding"
+  /v1/conservatism-overlays:
+    get:
+      operationId: listConservatismOverlays
+      tags: [Conservatism]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: modelId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [declared, approved, under_review, removed]
+      responses:
+        "200":
+          description: Conservatism overlays page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeConservatismOverlay"
+    post:
+      operationId: declareConservatismOverlay
+      tags: [Conservatism]
+      description: >-
+        Record explicit conservatism at a named model location with magnitude,
+        rationale, approver, and review date. Models may not be approved with
+        material undocumented conservatism.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConservatismOverlayCreate"
+      responses:
+        "201":
+          description: Overlay declared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeConservatismOverlay"
+  /v1/conservatism-overlays/aggregate:
+    get:
+      operationId: getConservatismAggregate
+      tags: [Conservatism]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Estate-level explicit conservatism priced for capital decisions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeConservatismAggregate"
+  /v1/models/{modelId}/permitted-use:
+    parameters:
+      - $ref: "#/components/parameters/ModelId"
+    get:
+      operationId: getPermittedUse
+      tags: [Use]
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Permitted-use record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePermittedUse"
+    put:
+      operationId: setPermittedUse
+      tags: [Use]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermittedUse"
+      responses:
+        "200":
+          description: Permitted use set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePermittedUse"
+  /v1/use-exceptions:
+    get:
+      operationId: listUseExceptions
+      tags: [Use]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [requested, authorised, expired, breached]
+      responses:
+        "200":
+          description: Use exceptions page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeUseException"
+    post:
+      operationId: requestUseException
+      tags: [Use]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UseExceptionCreate"
+      responses:
+        "201":
+          description: Exception requested for risk committee decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeUseException"
+  /v1/use-exceptions/{exceptionId}/authorise:
+    parameters:
+      - $ref: "#/components/parameters/ExceptionId"
+    post:
+      operationId: authoriseUseException
+      tags: [Use]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, expiry, compensatingConditions]
+              properties:
+                decision:
+                  type: string
+                  enum: [authorised, refused]
+                expiry:
+                  type: string
+                  format: date-time
+                compensatingConditions:
+                  type: array
+                  items:
+                    type: string
+                committeeReference:
+                  type: string
+      responses:
+        "200":
+          description: Exception decided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeUseException"
+  /v1/monitoring/obligations:
+    get:
+      operationId: listMonitoringObligations
+      tags: [Monitoring]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: modelId
+          in: query
+          schema:
+            type: string
+        - name: inBreach
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Monitoring obligations page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeMonitoringObligation"
+    post:
+      operationId: assignMonitoringObligation
+      tags: [Monitoring]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitoringObligationCreate"
+      responses:
+        "201":
+          description: Obligation assigned at approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeMonitoringObligation"
+  /v1/monitoring/breaches:
+    post:
+      operationId: recordMonitoringBreach
+      tags: [Monitoring]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitoringBreachCreate"
+      responses:
+        "201":
+          description: Breach recorded; revalidation may be triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeMonitoringBreach"
+  /v1/revalidation-triggers:
+    get:
+      operationId: listRevalidationTriggers
+      tags: [Monitoring]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Revalidation triggers page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeRevalidationTrigger"
+  /v1/quantifications:
+    get:
+      operationId: listQuantifications
+      tags: [Quantification]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: modelId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Model risk quantifications page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeModelRiskQuantification"
+    post:
+      operationId: recordQuantification
+      tags: [Quantification]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelRiskQuantificationCreate"
+      responses:
+        "201":
+          description: Quantification recorded against appetite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeModelRiskQuantification"
+  /v1/risk-appetite:
+    get:
+      operationId: getRiskAppetiteStatement
+      tags: [Quantification]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Stated model risk appetite and KPIs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeRiskAppetiteStatement"
+    put:
+      operationId: updateRiskAppetiteStatement
+      tags: [Quantification]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiskAppetiteStatement"
+      responses:
+        "200":
+          description: Appetite updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeRiskAppetiteStatement"
+  /v1/lump-sum-buffers:
+    get:
+      operationId: listLumpSumBuffers
+      tags: [Quantification]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Documented buffers where quantification is impossible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeLumpSumBuffer"
+    post:
+      operationId: fixLumpSumBuffer
+      tags: [Quantification]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LumpSumBufferCreate"
+      responses:
+        "201":
+          description: Buffer fixed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeLumpSumBuffer"
+  /v1/supervisory-add-ons:
+    get:
+      operationId: listSupervisoryAddOns
+      tags: [Supervisory]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, remediating, reduced, closed]
+      responses:
+        "200":
+          description: Supervisory capital add-ons page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeSupervisoryAddOn"
+    post:
+      operationId: recordSupervisoryAddOn
+      tags: [Supervisory]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupervisoryAddOnCreate"
+      responses:
+        "201":
+          description: Add-on recorded as managed liability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeSupervisoryAddOn"
+  /v1/supervisory-add-ons/{addOnId}/remediation:
+    parameters:
+      - $ref: "#/components/parameters/AddOnId"
+    put:
+      operationId: updateRemediationPlan
+      tags: [Supervisory]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RemediationPlan"
+      responses:
+        "200":
+          description: Remediation plan updated with measured reduction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeSupervisoryAddOn"
+  /v1/supervisory-packs:
+    post:
+      operationId: assembleSupervisoryPack
+      tags: [Supervisory]
+      description: >-
+        Assemble an examination pack from the live record — inventory boundary
+        decisions, tiering rationale, validation evidence, open findings, and
+        quantified model risk against appetite.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scope]
+              properties:
+                scope:
+                  type: string
+                  enum: [full_estate, regulatory_models, material_models]
+                asOf:
+                  type: string
+                  format: date-time
+                examinationReference:
+                  type: string
+      responses:
+        "201":
+          description: Pack assembled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeSupervisoryPack"
+  /v1/supervisory-packs/{packId}:
+    parameters:
+      - $ref: "#/components/parameters/PackId"
+    get:
+      operationId: getSupervisoryPack
+      tags: [Supervisory]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Supervisory pack
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeSupervisoryPack"
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    ArtefactId:
+      name: artefactId
+      in: path
+      required: true
+      schema:
+        type: string
+    ModelId:
+      name: modelId
+      in: path
+      required: true
+      schema:
+        type: string
+    SubmissionId:
+      name: submissionId
+      in: path
+      required: true
+      schema:
+        type: string
+    EngagementId:
+      name: engagementId
+      in: path
+      required: true
+      schema:
+        type: string
+    FindingId:
+      name: findingId
+      in: path
+      required: true
+      schema:
+        type: string
+    ExceptionId:
+      name: exceptionId
+      in: path
+      required: true
+      schema:
+        type: string
+    AddOnId:
+      name: addOnId
+      in: path
+      required: true
+      schema:
+        type: string
+    PackId:
+      name: packId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+          example: EUR
+    Artefact:
+      type: object
+      required: [id, name, determinationStatus]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ownerFunction:
+          type: string
+        determinationStatus:
+          type: string
+          enum: [model, not_model, pending]
+        sourceSystem:
+          type: string
+    ArtefactCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        ownerFunction:
+          type: string
+        sourceSystem:
+          type: string
+        description:
+          type: string
+    ModelDetermination:
+      type: object
+      required: [id, artefactId, outcome, determinedBy, determinedAt]
+      properties:
+        id:
+          type: string
+        artefactId:
+          type: string
+        outcome:
+          type: string
+          enum: [model, not_model]
+        criteriaApplied:
+          type: array
+          items:
+            type: string
+        rationale:
+          type: string
+        determinedBy:
+          type: string
+        determinedAt:
+          type: string
+          format: date-time
+        appealPath:
+          type: string
+    ModelDeterminationCreate:
+      type: object
+      required: [outcome, criteriaApplied, rationale]
+      properties:
+        outcome:
+          type: string
+          enum: [model, not_model]
+        criteriaApplied:
+          type: array
+          items:
+            type: string
+        rationale:
+          type: string
+    Model:
+      type: object
+      required: [id, name, status, tier]
+      properties:
+        id:
+          type: string
+        artefactId:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [inventory, queued, in_validation, approved, constrained, retired]
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+        ownerId:
+          type: string
+        developerTeamId:
+          type: string
+        intendedUse:
+          type: string
+        regulatoryImpact:
+          type: string
+          enum: [none, low, material, capital_relevant]
+    TierCriteria:
+      type: object
+      required: [version, dimensions]
+      properties:
+        version:
+          type: string
+        dimensions:
+          type: array
+          items:
+            type: object
+            required: [name, weight]
+            properties:
+              name:
+                type: string
+                enum: [materiality, potential_loss, parameter_uncertainty, regulatory_impact, intended_use]
+              weight:
+                type: number
+                format: float
+        ownedByControlUnit:
+          type: boolean
+        effectiveFrom:
+          type: string
+          format: date-time
+    TierAssessment:
+      type: object
+      required: [id, modelId, tier, assessedAt]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+        scores:
+          type: object
+          additionalProperties:
+            type: number
+        rationale:
+          type: string
+        assessedBy:
+          type: string
+        assessedAt:
+          type: string
+          format: date-time
+        playbookId:
+          type: string
+    TierAssessmentCreate:
+      type: object
+      required: [tier, scores, rationale]
+      properties:
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+        scores:
+          type: object
+          additionalProperties:
+            type: number
+        rationale:
+          type: string
+    Submission:
+      type: object
+      required: [id, modelId, status, submittingFunction]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        status:
+          type: string
+          enum: [received, gapped, returned, accepted]
+        submittingFunction:
+          type: string
+        missingComponents:
+          type: array
+          items:
+            type: string
+            enum: [data, feeder_models, monitoring_plan, documentation, prior_findings]
+        returnCount:
+          type: integer
+        acceptedAt:
+          type: string
+          format: date-time
+    SubmissionCreate:
+      type: object
+      required: [modelId, submittingFunction]
+      properties:
+        modelId:
+          type: string
+        submittingFunction:
+          type: string
+        componentsPresent:
+          type: array
+          items:
+            type: string
+        feederModelIds:
+          type: array
+          items:
+            type: string
+    SubmissionReturnCreate:
+      type: object
+      required: [missingComponents, attributedTo]
+      properties:
+        missingComponents:
+          type: array
+          items:
+            type: string
+        attributedTo:
+          type: string
+        notes:
+          type: string
+    ValidationSlot:
+      type: object
+      required: [id, status, tier]
+      properties:
+        id:
+          type: string
+        submissionId:
+          type: string
+        modelId:
+          type: string
+        status:
+          type: string
+          enum: [open, allocated, deferred, released]
+        tier:
+          type: integer
+        scheduledStart:
+          type: string
+          format: date-time
+        scheduledEnd:
+          type: string
+          format: date-time
+        validatorId:
+          type: string
+    ValidationSlotAllocate:
+      type: object
+      required: [submissionId, scheduledStart, scheduledEnd]
+      properties:
+        submissionId:
+          type: string
+        scheduledStart:
+          type: string
+          format: date-time
+        scheduledEnd:
+          type: string
+          format: date-time
+        preferredValidatorId:
+          type: string
+    ValidationEngagement:
+      type: object
+      required: [id, modelId, tier, status]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        slotId:
+          type: string
+        tier:
+          type: integer
+        status:
+          type: string
+          enum: [planned, in_progress, completed, aborted]
+        playbookSteps:
+          type: array
+          items:
+            type: string
+            enum:
+              - conceptual_soundness
+              - data_validation
+              - replication
+              - challenger
+              - sensitivity_analysis
+              - documentation
+              - implementation_review
+        leadValidatorId:
+          type: string
+        unitCost:
+          $ref: "#/components/schemas/Money"
+        cycleTimeDays:
+          type: number
+          format: float
+    ValidationEngagementCreate:
+      type: object
+      required: [modelId, slotId, leadValidatorId]
+      properties:
+        modelId:
+          type: string
+        slotId:
+          type: string
+        leadValidatorId:
+          type: string
+    ValidationTask:
+      type: object
+      required: [id, engagementId, taskType, placement, status]
+      properties:
+        id:
+          type: string
+        engagementId:
+          type: string
+        taskType:
+          type: string
+          enum:
+            - data_quality
+            - standardised_testing
+            - replication
+            - sensitivity_analysis
+            - initial_documentation
+            - monitoring_review
+            - conceptual_soundness
+            - challenger_construction
+            - implementation_review
+        placement:
+          type: string
+          enum: [onshore, offshore, external]
+        dataSensitivityBasis:
+          type: string
+          enum: [full, masked, sampled, synthetic]
+        status:
+          type: string
+          enum: [queued, in_progress, completed, blocked]
+        effortHours:
+          type: number
+          format: float
+        unitCost:
+          $ref: "#/components/schemas/Money"
+    ValidationTaskCreate:
+      type: object
+      required: [taskType, placement, dataSensitivityBasis]
+      properties:
+        taskType:
+          type: string
+          enum:
+            - data_quality
+            - standardised_testing
+            - replication
+            - sensitivity_analysis
+            - initial_documentation
+            - monitoring_review
+            - conceptual_soundness
+            - challenger_construction
+            - implementation_review
+        placement:
+          type: string
+          enum: [onshore, offshore, external]
+        dataSensitivityBasis:
+          type: string
+          enum: [full, masked, sampled, synthetic]
+        assigneeId:
+          type: string
+    CapacityForecast:
+      type: object
+      properties:
+        horizonQuarters:
+          type: integer
+        estateGrowthRate:
+          type: number
+          format: float
+        projectedModels:
+          type: integer
+        availableValidatorFte:
+          type: number
+          format: float
+        committedCycleTimeByTier:
+          type: object
+          additionalProperties:
+            type: number
+        capacityGapModels:
+          type: integer
+        costPerValidatedModel:
+          $ref: "#/components/schemas/Money"
+    Finding:
+      type: object
+      required: [id, modelId, severity, status]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        engagementId:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [open, constrained, closed]
+        description:
+          type: string
+        useConstraintApplied:
+          type: boolean
+        raisedBy:
+          type: string
+        raisedAt:
+          type: string
+          format: date-time
+    FindingCreate:
+      type: object
+      required: [modelId, engagementId, severity, description]
+      properties:
+        modelId:
+          type: string
+        engagementId:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        description:
+          type: string
+        applyUseConstraint:
+          type: boolean
+          default: true
+    ConservatismOverlay:
+      type: object
+      required: [id, modelId, location, magnitude, status]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        location:
+          type: string
+          description: Named component or parameter where conservatism sits
+        magnitude:
+          $ref: "#/components/schemas/Money"
+        rationale:
+          type: string
+        status:
+          type: string
+          enum: [declared, approved, under_review, removed]
+        approverId:
+          type: string
+        reviewDate:
+          type: string
+          format: date
+    ConservatismOverlayCreate:
+      type: object
+      required: [modelId, location, magnitude, rationale, reviewDate]
+      properties:
+        modelId:
+          type: string
+        location:
+          type: string
+        magnitude:
+          $ref: "#/components/schemas/Money"
+        rationale:
+          type: string
+        reviewDate:
+          type: string
+          format: date
+    ConservatismAggregate:
+      type: object
+      properties:
+        totalExplicitConservatism:
+          $ref: "#/components/schemas/Money"
+        overlayCount:
+          type: integer
+        awaitingReviewCount:
+          type: integer
+        byTier:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Money"
+        capitalReleaseCandidate:
+          $ref: "#/components/schemas/Money"
+    PermittedUse:
+      type: object
+      required: [modelId, allowedDecisions]
+      properties:
+        modelId:
+          type: string
+        allowedDecisions:
+          type: array
+          items:
+            type: string
+        prohibitedDecisions:
+          type: array
+          items:
+            type: string
+        constraints:
+          type: array
+          items:
+            type: string
+        effectiveFrom:
+          type: string
+          format: date-time
+    UseException:
+      type: object
+      required: [id, modelId, requestedUse, status]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        requestedUse:
+          type: string
+        status:
+          type: string
+          enum: [requested, authorised, expired, breached, refused]
+        expiry:
+          type: string
+          format: date-time
+        compensatingConditions:
+          type: array
+          items:
+            type: string
+        committeeReference:
+          type: string
+    UseExceptionCreate:
+      type: object
+      required: [modelId, requestedUse, businessJustification]
+      properties:
+        modelId:
+          type: string
+        requestedUse:
+          type: string
+        businessJustification:
+          type: string
+        proposedExpiry:
+          type: string
+          format: date-time
+    MonitoringObligation:
+      type: object
+      required: [id, modelId, ownerId, metric, threshold]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        ownerId:
+          type: string
+        developerTeamId:
+          type: string
+        metric:
+          type: string
+        threshold:
+          type: number
+          format: float
+        inBreach:
+          type: boolean
+        revalidationOnBreach:
+          type: boolean
+    MonitoringObligationCreate:
+      type: object
+      required: [modelId, ownerId, metric, threshold]
+      properties:
+        modelId:
+          type: string
+        ownerId:
+          type: string
+        developerTeamId:
+          type: string
+        metric:
+          type: string
+        threshold:
+          type: number
+          format: float
+        revalidationOnBreach:
+          type: boolean
+          default: true
+    MonitoringBreach:
+      type: object
+      required: [id, obligationId, observedValue, breachedAt]
+      properties:
+        id:
+          type: string
+        obligationId:
+          type: string
+        modelId:
+          type: string
+        observedValue:
+          type: number
+          format: float
+        breachedAt:
+          type: string
+          format: date-time
+        revalidationTriggered:
+          type: boolean
+    MonitoringBreachCreate:
+      type: object
+      required: [obligationId, observedValue, breachedAt]
+      properties:
+        obligationId:
+          type: string
+        observedValue:
+          type: number
+          format: float
+        breachedAt:
+          type: string
+          format: date-time
+    RevalidationTrigger:
+      type: object
+      required: [id, modelId, reason, status]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        reason:
+          type: string
+          enum: [monitoring_breach, change_of_use, exception_expiry, scheduled, supervisory]
+        status:
+          type: string
+          enum: [open, queued, in_progress, completed]
+        triggeredAt:
+          type: string
+          format: date-time
+    ModelRiskQuantification:
+      type: object
+      required: [id, scope, status]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        scope:
+          type: string
+          enum: [per_model, aggregate]
+        quantifiedAmount:
+          $ref: "#/components/schemas/Money"
+        status:
+          type: string
+          enum: [quantified, unquantifiable]
+        againstAppetite:
+          type: string
+          enum: [within, near, breached]
+        kpiSnapshot:
+          type: object
+          additionalProperties:
+            type: number
+        assessedAt:
+          type: string
+          format: date-time
+    ModelRiskQuantificationCreate:
+      type: object
+      required: [scope, status]
+      properties:
+        modelId:
+          type: string
+        scope:
+          type: string
+          enum: [per_model, aggregate]
+        quantifiedAmount:
+          $ref: "#/components/schemas/Money"
+        status:
+          type: string
+          enum: [quantified, unquantifiable]
+        kpiSnapshot:
+          type: object
+          additionalProperties:
+            type: number
+    RiskAppetiteStatement:
+      type: object
+      required: [version, kpis]
+      properties:
+        version:
+          type: string
+        narrative:
+          type: string
+        kpis:
+          type: array
+          items:
+            type: object
+            required: [name, threshold]
+            properties:
+              name:
+                type: string
+                description: At minimum model performance and open validation findings
+              threshold:
+                type: number
+                format: float
+              unit:
+                type: string
+        approvedBy:
+          type: string
+        approvedAt:
+          type: string
+          format: date-time
+    LumpSumBuffer:
+      type: object
+      required: [id, amount, rationale]
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        rationale:
+          type: string
+        fixedAt:
+          type: string
+          format: date-time
+    LumpSumBufferCreate:
+      type: object
+      required: [amount, rationale]
+      properties:
+        modelId:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        rationale:
+          type: string
+    SupervisoryAddOn:
+      type: object
+      required: [id, amount, status]
+      properties:
+        id:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        status:
+          type: string
+          enum: [open, remediating, reduced, closed]
+        imposedAt:
+          type: string
+          format: date-time
+        attributedCause:
+          type: string
+        remediationPlan:
+          $ref: "#/components/schemas/RemediationPlan"
+        measuredReduction:
+          $ref: "#/components/schemas/Money"
+    SupervisoryAddOnCreate:
+      type: object
+      required: [amount, attributedCause]
+      properties:
+        amount:
+          $ref: "#/components/schemas/Money"
+        attributedCause:
+          type: string
+        imposedAt:
+          type: string
+          format: date-time
+    RemediationPlan:
+      type: object
+      required: [actions, targetReduction]
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+        ownerId:
+          type: string
+        targetDate:
+          type: string
+          format: date
+        targetReduction:
+          $ref: "#/components/schemas/Money"
+        progressNotes:
+          type: string
+    SupervisoryPack:
+      type: object
+      required: [id, scope, assembledAt]
+      properties:
+        id:
+          type: string
+        scope:
+          type: string
+          enum: [full_estate, regulatory_models, material_models]
+        assembledAt:
+          type: string
+          format: date-time
+        examinationReference:
+          type: string
+        includedModelCount:
+          type: integer
+        openFindingsCount:
+          type: integer
+        aggregateModelRisk:
+          $ref: "#/components/schemas/Money"
+        packUri:
+          type: string
+          format: uri
+    DataEnvelopeArtefact:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/Artefact"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeModelDetermination:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ModelDetermination"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeModel:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/Model"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeTierCriteria:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/TierCriteria"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeTierAssessment:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/TierAssessment"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeSubmission:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/Submission"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeValidationSlot:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ValidationSlot"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeValidationEngagement:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ValidationEngagement"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeValidationTask:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ValidationTask"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeCapacityForecast:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/CapacityForecast"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeFinding:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/Finding"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeConservatismOverlay:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ConservatismOverlay"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeConservatismAggregate:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ConservatismAggregate"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopePermittedUse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/PermittedUse"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeUseException:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/UseException"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeMonitoringObligation:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/MonitoringObligation"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeMonitoringBreach:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/MonitoringBreach"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeModelRiskQuantification:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ModelRiskQuantification"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeRiskAppetiteStatement:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/RiskAppetiteStatement"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeLumpSumBuffer:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/LumpSumBuffer"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeSupervisoryAddOn:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/SupervisoryAddOn"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeSupervisoryPack:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/SupervisoryPack"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeArtefact:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Artefact"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeModel:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Model"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeTierAssessment:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/TierAssessment"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeSubmission:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Submission"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeValidationSlot:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ValidationSlot"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeValidationEngagement:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ValidationEngagement"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeValidationTask:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ValidationTask"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeFinding:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Finding"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeConservatismOverlay:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ConservatismOverlay"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeUseException:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/UseException"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeMonitoringObligation:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/MonitoringObligation"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeRevalidationTrigger:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/RevalidationTrigger"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeModelRiskQuantification:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ModelRiskQuantification"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeLumpSumBuffer:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/LumpSumBuffer"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeSupervisoryAddOn:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/SupervisoryAddOn"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
