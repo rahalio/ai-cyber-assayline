@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: Assayline — Tiering API
+  version: 0.1.0
+  description: Materiality-based tier assessments and criteria
+  license:
+    name: Proprietary
+    url: https://assayline.local/license
+  x-domain: tir
+  x-product-slug: assayline
+  x-maturity: draft
+servers:
+- url: https://api.assayline.local
+  description: Local / starter API
+security:
+- apiKey: []
+- bearerAuth: []
+tags:
+- name: Tiering
+  description: Materiality-based tier assessments and criteria
+paths:
+  /v1/models/{modelId}/tier-assessments:
+    parameters:
+    - $ref: ./tiering.schemas.yaml#/components/parameters/ModelId
+    get:
+      operationId: listTierAssessments
+      tags:
+      - Tiering
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Tier history for the model
+          content:
+            application/json:
+              schema:
+                $ref: ./tiering.schemas.yaml#/components/schemas/TierAssessmentListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Tier Assessments
+    post:
+      operationId: assessModelTier
+      tags:
+      - Tiering
+      description: Set tier from materiality, potential financial loss, parameter uncertainty, regulatory
+        impact, and intended use. Tier selects the validation playbook.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./tiering.schemas.yaml#/components/schemas/TierAssessmentCreate
+      responses:
+        '201':
+          description: Tier assessment recorded
+          content:
+            application/json:
+              schema:
+                $ref: ./tiering.schemas.yaml#/components/schemas/TierAssessmentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Assess Model Tier
+  /v1/tier-criteria:
+    get:
+      operationId: getTierCriteria
+      tags:
+      - Tiering
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Published tiering criteria owned by the control unit
+          content:
+            application/json:
+              schema:
+                $ref: ./tiering.schemas.yaml#/components/schemas/TierCriteriaResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Get Tier Criteria
+    put:
+      operationId: updateTierCriteria
+      tags:
+      - Tiering
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./tiering.schemas.yaml#/components/schemas/TierCriteria
+      responses:
+        '200':
+          description: Criteria updated
+          content:
+            application/json:
+              schema:
+                $ref: ./tiering.schemas.yaml#/components/schemas/TierCriteriaResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Update Tier Criteria
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

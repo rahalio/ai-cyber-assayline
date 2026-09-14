@@ -1,0 +1,16 @@
+---
+description: Never commit or push .codegen for Assayline
+globs:
+  - .codegen/**
+  - "**/zero_codegen/**"
+  - "**/.zero-codegen*.json"
+alwaysApply: true
+---
+
+# Assayline — .codegen must not reach GitHub
+
+**.codegen should never be pushed to GitHub**
+
+- Do not stage or commit `.codegen/`, `codegen/`, or `**/zero_codegen/`
+- Keep `package_scope` as `@assayline` in local codegen config only
+- If missing locally, rsync from `zero-apps-codegen-scaffold` — still do not push

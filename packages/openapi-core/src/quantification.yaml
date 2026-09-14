@@ -1,0 +1,151 @@
+openapi: 3.1.0
+info:
+  title: Assayline — Quantification API
+  version: 0.1.0
+  description: Model risk quantification against appetite and buffers
+  license:
+    name: Proprietary
+    url: https://assayline.local/license
+  x-domain: qnt
+  x-product-slug: assayline
+  x-maturity: draft
+servers:
+- url: https://api.assayline.local
+  description: Local / starter API
+security:
+- apiKey: []
+- bearerAuth: []
+tags:
+- name: Quantification
+  description: Model risk quantification against appetite and buffers
+paths:
+  /v1/quantifications:
+    get:
+      operationId: listQuantifications
+      tags:
+      - Quantification
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      - name: modelId
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Model risk quantifications page
+          content:
+            application/json:
+              schema:
+                $ref: ./quantification.schemas.yaml#/components/schemas/ModelRiskQuantificationListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Quantifications
+    post:
+      operationId: recordQuantification
+      tags:
+      - Quantification
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./quantification.schemas.yaml#/components/schemas/ModelRiskQuantificationCreate
+      responses:
+        '201':
+          description: Quantification recorded against appetite
+          content:
+            application/json:
+              schema:
+                $ref: ./quantification.schemas.yaml#/components/schemas/ModelRiskQuantificationResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Record Quantification
+  /v1/risk-appetite:
+    get:
+      operationId: getRiskAppetiteStatement
+      tags:
+      - Quantification
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Stated model risk appetite and KPIs
+          content:
+            application/json:
+              schema:
+                $ref: ./quantification.schemas.yaml#/components/schemas/RiskAppetiteStatementResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Get Risk Appetite Statement
+    put:
+      operationId: updateRiskAppetiteStatement
+      tags:
+      - Quantification
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./quantification.schemas.yaml#/components/schemas/RiskAppetiteStatement
+      responses:
+        '200':
+          description: Appetite updated
+          content:
+            application/json:
+              schema:
+                $ref: ./quantification.schemas.yaml#/components/schemas/RiskAppetiteStatementResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Update Risk Appetite Statement
+  /v1/lump-sum-buffers:
+    get:
+      operationId: listLumpSumBuffers
+      tags:
+      - Quantification
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Documented buffers where quantification is impossible
+          content:
+            application/json:
+              schema:
+                $ref: ./quantification.schemas.yaml#/components/schemas/LumpSumBufferListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Lump Sum Buffers
+    post:
+      operationId: fixLumpSumBuffer
+      tags:
+      - Quantification
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./quantification.schemas.yaml#/components/schemas/LumpSumBufferCreate
+      responses:
+        '201':
+          description: Buffer fixed
+          content:
+            application/json:
+              schema:
+                $ref: ./quantification.schemas.yaml#/components/schemas/LumpSumBufferResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Fix Lump Sum Buffer
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

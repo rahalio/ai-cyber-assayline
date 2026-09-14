@@ -1,0 +1,366 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const raiseFinding_Body = z
+  .object({
+    modelId: z.string(),
+    engagementId: z.string(),
+    severity: z.enum(['low', 'medium', 'high', 'critical']),
+    description: z.string(),
+    applyUseConstraint: z.boolean().optional().default(true),
+  })
+  .passthrough();
+const closeFinding_Body = z
+  .object({
+    closureRationale: z.string(),
+    releaseConstraint: z.boolean().optional().default(true),
+  })
+  .passthrough();
+const Finding = z
+  .object({
+    id: z.string(),
+    modelId: z.string(),
+    engagementId: z.string().optional(),
+    severity: z.enum(['low', 'medium', 'high', 'critical']),
+    status: z.enum(['open', 'constrained', 'closed']),
+    description: z.string().optional(),
+    useConstraintApplied: z.boolean().optional(),
+    raisedBy: z.string().optional(),
+    raisedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const FindingListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          id: z.string(),
+          modelId: z.string(),
+          engagementId: z.string().optional(),
+          severity: z.enum(['low', 'medium', 'high', 'critical']),
+          status: z.enum(['open', 'constrained', 'closed']),
+          description: z.string().optional(),
+          useConstraintApplied: z.boolean().optional(),
+          raisedBy: z.string().optional(),
+          raisedAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+    timestamp: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const FindingListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              id: z.string(),
+              modelId: z.string(),
+              engagementId: z.string().optional(),
+              severity: z.enum(['low', 'medium', 'high', 'critical']),
+              status: z.enum(['open', 'constrained', 'closed']),
+              description: z.string().optional(),
+              useConstraintApplied: z.boolean().optional(),
+              raisedBy: z.string().optional(),
+              raisedAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const FindingCreate = z
+  .object({
+    modelId: z.string(),
+    engagementId: z.string(),
+    severity: z.enum(['low', 'medium', 'high', 'critical']),
+    description: z.string(),
+    applyUseConstraint: z.boolean().optional().default(true),
+  })
+  .passthrough();
+const FindingResponse = z
+  .object({
+    data: z
+      .object({
+        id: z.string(),
+        modelId: z.string(),
+        engagementId: z.string().optional(),
+        severity: z.enum(['low', 'medium', 'high', 'critical']),
+        status: z.enum(['open', 'constrained', 'closed']),
+        description: z.string().optional(),
+        useConstraintApplied: z.boolean().optional(),
+        raisedBy: z.string().optional(),
+        raisedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  raiseFinding_Body,
+  closeFinding_Body,
+  Finding,
+  FindingListData,
+  ResponseMeta,
+  FindingListResponse,
+  Problem,
+  FindingCreate,
+  FindingResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/findings',
+    alias: 'listFindings',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: 'modelId',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'status',
+        type: 'Query',
+        schema: z.enum(['open', 'constrained', 'closed']).optional(),
+      },
+      {
+        name: 'minSeverity',
+        type: 'Query',
+        schema: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  id: z.string(),
+                  modelId: z.string(),
+                  engagementId: z.string().optional(),
+                  severity: z.enum(['low', 'medium', 'high', 'critical']),
+                  status: z.enum(['open', 'constrained', 'closed']),
+                  description: z.string().optional(),
+                  useConstraintApplied: z.boolean().optional(),
+                  raisedBy: z.string().optional(),
+                  raisedAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/findings',
+    alias: 'raiseFinding',
+    description: `Raise a severity-graded finding. Above the configured severity for the model&#x27;s tier, permitted use is automatically restricted until closure.`,
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: raiseFinding_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string(),
+            engagementId: z.string().optional(),
+            severity: z.enum(['low', 'medium', 'high', 'critical']),
+            status: z.enum(['open', 'constrained', 'closed']),
+            description: z.string().optional(),
+            useConstraintApplied: z.boolean().optional(),
+            raisedBy: z.string().optional(),
+            raisedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/findings/:findingId/close',
+    alias: 'closeFinding',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: closeFinding_Body,
+      },
+      {
+        name: 'findingId',
+        type: 'Path',
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string(),
+            engagementId: z.string().optional(),
+            severity: z.enum(['low', 'medium', 'high', 'critical']),
+            status: z.enum(['open', 'constrained', 'closed']),
+            description: z.string().optional(),
+            useConstraintApplied: z.boolean().optional(),
+            raisedBy: z.string().optional(),
+            raisedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

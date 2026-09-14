@@ -1,0 +1,312 @@
+openapi: 3.1.0
+info:
+  title: Validation API schemas
+  version: 0.1.0
+  description: Schemas for Assayline validation domain.
+paths: {}
+components:
+  parameters:
+    EngagementId:
+      name: engagementId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    ValidationTaskCreate:
+      type: object
+      required:
+      - taskType
+      - placement
+      - dataSensitivityBasis
+      properties:
+        taskType:
+          type: string
+          enum:
+          - data_quality
+          - standardised_testing
+          - replication
+          - sensitivity_analysis
+          - initial_documentation
+          - monitoring_review
+          - conceptual_soundness
+          - challenger_construction
+          - implementation_review
+        placement:
+          type: string
+          enum:
+          - onshore
+          - offshore
+          - external
+        dataSensitivityBasis:
+          type: string
+          enum:
+          - full
+          - masked
+          - sampled
+          - synthetic
+        assigneeId:
+          type: string
+    ValidationTask:
+      type: object
+      required:
+      - id
+      - engagementId
+      - taskType
+      - placement
+      - status
+      properties:
+        id:
+          type: string
+        engagementId:
+          type: string
+        taskType:
+          type: string
+          enum:
+          - data_quality
+          - standardised_testing
+          - replication
+          - sensitivity_analysis
+          - initial_documentation
+          - monitoring_review
+          - conceptual_soundness
+          - challenger_construction
+          - implementation_review
+        placement:
+          type: string
+          enum:
+          - onshore
+          - offshore
+          - external
+        dataSensitivityBasis:
+          type: string
+          enum:
+          - full
+          - masked
+          - sampled
+          - synthetic
+        status:
+          type: string
+          enum:
+          - queued
+          - in_progress
+          - completed
+          - blocked
+        effortHours:
+          type: number
+          format: float
+        unitCost:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+    ValidationSlotResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ValidationSlot'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ValidationSlotAllocate:
+      type: object
+      required:
+      - submissionId
+      - scheduledStart
+      - scheduledEnd
+      properties:
+        submissionId:
+          type: string
+        scheduledStart:
+          type: string
+          format: date-time
+        scheduledEnd:
+          type: string
+          format: date-time
+        preferredValidatorId:
+          type: string
+    CapacityForecastResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/CapacityForecast'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    CapacityForecast:
+      type: object
+      properties:
+        horizonQuarters:
+          type: integer
+        estateGrowthRate:
+          type: number
+          format: float
+        projectedModels:
+          type: integer
+        availableValidatorFte:
+          type: number
+          format: float
+        committedCycleTimeByTier:
+          type: object
+          additionalProperties:
+            type: number
+        capacityGapModels:
+          type: integer
+        costPerValidatedModel:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+    ValidationTaskResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ValidationTask'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ValidationEngagementResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ValidationEngagement'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ValidationEngagementCreate:
+      type: object
+      required:
+      - modelId
+      - slotId
+      - leadValidatorId
+      properties:
+        modelId:
+          type: string
+        slotId:
+          type: string
+        leadValidatorId:
+          type: string
+    ValidationSlot:
+      type: object
+      required:
+      - id
+      - status
+      - tier
+      properties:
+        id:
+          type: string
+        submissionId:
+          type: string
+        modelId:
+          type: string
+        status:
+          type: string
+          enum:
+          - open
+          - allocated
+          - deferred
+          - released
+        tier:
+          type: integer
+        scheduledStart:
+          type: string
+          format: date-time
+        scheduledEnd:
+          type: string
+          format: date-time
+        validatorId:
+          type: string
+    ValidationSlotListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationSlot'
+    ValidationSlotListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ValidationSlotListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ValidationEngagement:
+      type: object
+      required:
+      - id
+      - modelId
+      - tier
+      - status
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        slotId:
+          type: string
+        tier:
+          type: integer
+        status:
+          type: string
+          enum:
+          - planned
+          - in_progress
+          - completed
+          - aborted
+        playbookSteps:
+          type: array
+          items:
+            type: string
+            enum:
+            - conceptual_soundness
+            - data_validation
+            - replication
+            - challenger
+            - sensitivity_analysis
+            - documentation
+            - implementation_review
+        leadValidatorId:
+          type: string
+        unitCost:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        cycleTimeDays:
+          type: number
+          format: float
+    ValidationEngagementListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationEngagement'
+    ValidationEngagementListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ValidationEngagementListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ValidationTaskListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationTask'
+    ValidationTaskListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ValidationTaskListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

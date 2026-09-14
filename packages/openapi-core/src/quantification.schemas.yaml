@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: Quantification API schemas
+  version: 0.1.0
+  description: Schemas for Assayline quantification domain.
+paths: {}
+components:
+  schemas:
+    RiskAppetiteStatementResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/RiskAppetiteStatement'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    LumpSumBufferListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LumpSumBuffer'
+    LumpSumBufferListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/LumpSumBufferListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ModelRiskQuantificationListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelRiskQuantification'
+    ModelRiskQuantificationListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ModelRiskQuantificationListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    LumpSumBuffer:
+      type: object
+      required:
+      - id
+      - amount
+      - rationale
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        amount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        rationale:
+          type: string
+        fixedAt:
+          type: string
+          format: date-time
+    LumpSumBufferCreate:
+      type: object
+      required:
+      - amount
+      - rationale
+      properties:
+        modelId:
+          type: string
+        amount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        rationale:
+          type: string
+    ModelRiskQuantificationCreate:
+      type: object
+      required:
+      - scope
+      - status
+      properties:
+        modelId:
+          type: string
+        scope:
+          type: string
+          enum:
+          - per_model
+          - aggregate
+        quantifiedAmount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        status:
+          type: string
+          enum:
+          - quantified
+          - unquantifiable
+        kpiSnapshot:
+          type: object
+          additionalProperties:
+            type: number
+    ModelRiskQuantificationResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ModelRiskQuantification'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ModelRiskQuantification:
+      type: object
+      required:
+      - id
+      - scope
+      - status
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        scope:
+          type: string
+          enum:
+          - per_model
+          - aggregate
+        quantifiedAmount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        status:
+          type: string
+          enum:
+          - quantified
+          - unquantifiable
+        againstAppetite:
+          type: string
+          enum:
+          - within
+          - near
+          - breached
+        kpiSnapshot:
+          type: object
+          additionalProperties:
+            type: number
+        assessedAt:
+          type: string
+          format: date-time
+    LumpSumBufferResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/LumpSumBuffer'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    RiskAppetiteStatement:
+      type: object
+      required:
+      - version
+      - kpis
+      properties:
+        version:
+          type: string
+        narrative:
+          type: string
+        kpis:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - threshold
+            properties:
+              name:
+                type: string
+                description: At minimum model performance and open validation findings
+              threshold:
+                type: number
+                format: float
+              unit:
+                type: string
+        approvedBy:
+          type: string
+        approvedAt:
+          type: string
+          format: date-time

@@ -1,0 +1,833 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const recordQuantification_Body = z
+  .object({
+    modelId: z.string().optional(),
+    scope: z.enum(['per_model', 'aggregate']),
+    quantifiedAmount: z
+      .object({
+        amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+        currency: z
+          .string()
+          .min(3)
+          .max(3)
+          .regex(/^[A-Z]{3}$/),
+      })
+      .passthrough()
+      .optional(),
+    status: z.enum(['quantified', 'unquantifiable']),
+    kpiSnapshot: z.record(z.number()).optional(),
+  })
+  .passthrough();
+const updateRiskAppetiteStatement_Body = z
+  .object({
+    version: z.string(),
+    narrative: z.string().optional(),
+    kpis: z.array(
+      z
+        .object({
+          name: z.string(),
+          threshold: z.number(),
+          unit: z.string().optional(),
+        })
+        .passthrough()
+    ),
+    approvedBy: z.string().optional(),
+    approvedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const fixLumpSumBuffer_Body = z
+  .object({
+    modelId: z.string().optional(),
+    amount: z
+      .object({
+        amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+        currency: z
+          .string()
+          .min(3)
+          .max(3)
+          .regex(/^[A-Z]{3}$/),
+      })
+      .passthrough(),
+    rationale: z.string(),
+  })
+  .passthrough();
+const Currency = z.string();
+const Money = z
+  .object({
+    amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+    currency: z
+      .string()
+      .min(3)
+      .max(3)
+      .regex(/^[A-Z]{3}$/),
+  })
+  .passthrough();
+const ModelRiskQuantification = z
+  .object({
+    id: z.string(),
+    modelId: z.string().optional(),
+    scope: z.enum(['per_model', 'aggregate']),
+    quantifiedAmount: z
+      .object({
+        amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+        currency: z
+          .string()
+          .min(3)
+          .max(3)
+          .regex(/^[A-Z]{3}$/),
+      })
+      .passthrough()
+      .optional(),
+    status: z.enum(['quantified', 'unquantifiable']),
+    againstAppetite: z.enum(['within', 'near', 'breached']).optional(),
+    kpiSnapshot: z.record(z.number()).optional(),
+    assessedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const ModelRiskQuantificationListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          id: z.string(),
+          modelId: z.string().optional(),
+          scope: z.enum(['per_model', 'aggregate']),
+          quantifiedAmount: z
+            .object({
+              amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+              currency: z
+                .string()
+                .min(3)
+                .max(3)
+                .regex(/^[A-Z]{3}$/),
+            })
+            .passthrough()
+            .optional(),
+          status: z.enum(['quantified', 'unquantifiable']),
+          againstAppetite: z.enum(['within', 'near', 'breached']).optional(),
+          kpiSnapshot: z.record(z.number()).optional(),
+          assessedAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+    timestamp: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const ModelRiskQuantificationListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              id: z.string(),
+              modelId: z.string().optional(),
+              scope: z.enum(['per_model', 'aggregate']),
+              quantifiedAmount: z
+                .object({
+                  amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+                  currency: z
+                    .string()
+                    .min(3)
+                    .max(3)
+                    .regex(/^[A-Z]{3}$/),
+                })
+                .passthrough()
+                .optional(),
+              status: z.enum(['quantified', 'unquantifiable']),
+              againstAppetite: z
+                .enum(['within', 'near', 'breached'])
+                .optional(),
+              kpiSnapshot: z.record(z.number()).optional(),
+              assessedAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const ModelRiskQuantificationCreate = z
+  .object({
+    modelId: z.string().optional(),
+    scope: z.enum(['per_model', 'aggregate']),
+    quantifiedAmount: z
+      .object({
+        amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+        currency: z
+          .string()
+          .min(3)
+          .max(3)
+          .regex(/^[A-Z]{3}$/),
+      })
+      .passthrough()
+      .optional(),
+    status: z.enum(['quantified', 'unquantifiable']),
+    kpiSnapshot: z.record(z.number()).optional(),
+  })
+  .passthrough();
+const ModelRiskQuantificationResponse = z
+  .object({
+    data: z
+      .object({
+        id: z.string(),
+        modelId: z.string().optional(),
+        scope: z.enum(['per_model', 'aggregate']),
+        quantifiedAmount: z
+          .object({
+            amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+            currency: z
+              .string()
+              .min(3)
+              .max(3)
+              .regex(/^[A-Z]{3}$/),
+          })
+          .passthrough()
+          .optional(),
+        status: z.enum(['quantified', 'unquantifiable']),
+        againstAppetite: z.enum(['within', 'near', 'breached']).optional(),
+        kpiSnapshot: z.record(z.number()).optional(),
+        assessedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const RiskAppetiteStatement = z
+  .object({
+    version: z.string(),
+    narrative: z.string().optional(),
+    kpis: z.array(
+      z
+        .object({
+          name: z.string(),
+          threshold: z.number(),
+          unit: z.string().optional(),
+        })
+        .passthrough()
+    ),
+    approvedBy: z.string().optional(),
+    approvedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const RiskAppetiteStatementResponse = z
+  .object({
+    data: z
+      .object({
+        version: z.string(),
+        narrative: z.string().optional(),
+        kpis: z.array(
+          z
+            .object({
+              name: z.string(),
+              threshold: z.number(),
+              unit: z.string().optional(),
+            })
+            .passthrough()
+        ),
+        approvedBy: z.string().optional(),
+        approvedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const LumpSumBuffer = z
+  .object({
+    id: z.string(),
+    modelId: z.string().optional(),
+    amount: z
+      .object({
+        amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+        currency: z
+          .string()
+          .min(3)
+          .max(3)
+          .regex(/^[A-Z]{3}$/),
+      })
+      .passthrough(),
+    rationale: z.string(),
+    fixedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const LumpSumBufferListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          id: z.string(),
+          modelId: z.string().optional(),
+          amount: z
+            .object({
+              amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+              currency: z
+                .string()
+                .min(3)
+                .max(3)
+                .regex(/^[A-Z]{3}$/),
+            })
+            .passthrough(),
+          rationale: z.string(),
+          fixedAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const LumpSumBufferListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              id: z.string(),
+              modelId: z.string().optional(),
+              amount: z
+                .object({
+                  amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+                  currency: z
+                    .string()
+                    .min(3)
+                    .max(3)
+                    .regex(/^[A-Z]{3}$/),
+                })
+                .passthrough(),
+              rationale: z.string(),
+              fixedAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const LumpSumBufferCreate = z
+  .object({
+    modelId: z.string().optional(),
+    amount: z
+      .object({
+        amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+        currency: z
+          .string()
+          .min(3)
+          .max(3)
+          .regex(/^[A-Z]{3}$/),
+      })
+      .passthrough(),
+    rationale: z.string(),
+  })
+  .passthrough();
+const LumpSumBufferResponse = z
+  .object({
+    data: z
+      .object({
+        id: z.string(),
+        modelId: z.string().optional(),
+        amount: z
+          .object({
+            amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+            currency: z
+              .string()
+              .min(3)
+              .max(3)
+              .regex(/^[A-Z]{3}$/),
+          })
+          .passthrough(),
+        rationale: z.string(),
+        fixedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  recordQuantification_Body,
+  updateRiskAppetiteStatement_Body,
+  fixLumpSumBuffer_Body,
+  Currency,
+  Money,
+  ModelRiskQuantification,
+  ModelRiskQuantificationListData,
+  ResponseMeta,
+  ModelRiskQuantificationListResponse,
+  Problem,
+  ModelRiskQuantificationCreate,
+  ModelRiskQuantificationResponse,
+  RiskAppetiteStatement,
+  RiskAppetiteStatementResponse,
+  LumpSumBuffer,
+  LumpSumBufferListData,
+  LumpSumBufferListResponse,
+  LumpSumBufferCreate,
+  LumpSumBufferResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/lump-sum-buffers',
+    alias: 'listLumpSumBuffers',
+    requestFormat: 'json',
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  id: z.string(),
+                  modelId: z.string().optional(),
+                  amount: z
+                    .object({
+                      amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+                      currency: z
+                        .string()
+                        .min(3)
+                        .max(3)
+                        .regex(/^[A-Z]{3}$/),
+                    })
+                    .passthrough(),
+                  rationale: z.string(),
+                  fixedAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/lump-sum-buffers',
+    alias: 'fixLumpSumBuffer',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: fixLumpSumBuffer_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string().optional(),
+            amount: z
+              .object({
+                amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+                currency: z
+                  .string()
+                  .min(3)
+                  .max(3)
+                  .regex(/^[A-Z]{3}$/),
+              })
+              .passthrough(),
+            rationale: z.string(),
+            fixedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/quantifications',
+    alias: 'listQuantifications',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: 'modelId',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  id: z.string(),
+                  modelId: z.string().optional(),
+                  scope: z.enum(['per_model', 'aggregate']),
+                  quantifiedAmount: z
+                    .object({
+                      amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+                      currency: z
+                        .string()
+                        .min(3)
+                        .max(3)
+                        .regex(/^[A-Z]{3}$/),
+                    })
+                    .passthrough()
+                    .optional(),
+                  status: z.enum(['quantified', 'unquantifiable']),
+                  againstAppetite: z
+                    .enum(['within', 'near', 'breached'])
+                    .optional(),
+                  kpiSnapshot: z.record(z.number()).optional(),
+                  assessedAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/quantifications',
+    alias: 'recordQuantification',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: recordQuantification_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string().optional(),
+            scope: z.enum(['per_model', 'aggregate']),
+            quantifiedAmount: z
+              .object({
+                amount: z.string().regex(/^-?\d+(\.\d{1,5})?$/),
+                currency: z
+                  .string()
+                  .min(3)
+                  .max(3)
+                  .regex(/^[A-Z]{3}$/),
+              })
+              .passthrough()
+              .optional(),
+            status: z.enum(['quantified', 'unquantifiable']),
+            againstAppetite: z.enum(['within', 'near', 'breached']).optional(),
+            kpiSnapshot: z.record(z.number()).optional(),
+            assessedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/risk-appetite',
+    alias: 'getRiskAppetiteStatement',
+    requestFormat: 'json',
+    response: z
+      .object({
+        data: z
+          .object({
+            version: z.string(),
+            narrative: z.string().optional(),
+            kpis: z.array(
+              z
+                .object({
+                  name: z.string(),
+                  threshold: z.number(),
+                  unit: z.string().optional(),
+                })
+                .passthrough()
+            ),
+            approvedBy: z.string().optional(),
+            approvedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'put',
+    path: '/v1/risk-appetite',
+    alias: 'updateRiskAppetiteStatement',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: updateRiskAppetiteStatement_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            version: z.string(),
+            narrative: z.string().optional(),
+            kpis: z.array(
+              z
+                .object({
+                  name: z.string(),
+                  threshold: z.number(),
+                  unit: z.string().optional(),
+                })
+                .passthrough()
+            ),
+            approvedBy: z.string().optional(),
+            approvedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

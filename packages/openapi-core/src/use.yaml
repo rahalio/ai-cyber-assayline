@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: Assayline — Permitted Use API
+  version: 0.1.0
+  description: Permitted-use records and committee exceptions
+  license:
+    name: Proprietary
+    url: https://assayline.local/license
+  x-domain: use
+  x-product-slug: assayline
+  x-maturity: draft
+servers:
+- url: https://api.assayline.local
+  description: Local / starter API
+security:
+- apiKey: []
+- bearerAuth: []
+tags:
+- name: Use
+  description: Permitted-use records and committee exceptions
+paths:
+  /v1/models/{modelId}/permitted-use:
+    parameters:
+    - $ref: ./use.schemas.yaml#/components/parameters/ModelId
+    get:
+      operationId: getPermittedUse
+      tags:
+      - Use
+      security:
+      - bearerAuth: []
+      - apiKey: []
+      responses:
+        '200':
+          description: Permitted-use record
+          content:
+            application/json:
+              schema:
+                $ref: ./use.schemas.yaml#/components/schemas/PermittedUseResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Get Permitted Use
+    put:
+      operationId: setPermittedUse
+      tags:
+      - Use
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./use.schemas.yaml#/components/schemas/PermittedUse
+      responses:
+        '200':
+          description: Permitted use set
+          content:
+            application/json:
+              schema:
+                $ref: ./use.schemas.yaml#/components/schemas/PermittedUseResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Set Permitted Use
+  /v1/use-exceptions:
+    get:
+      operationId: listUseExceptions
+      tags:
+      - Use
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - requested
+          - authorised
+          - expired
+          - breached
+      responses:
+        '200':
+          description: Use exceptions page
+          content:
+            application/json:
+              schema:
+                $ref: ./use.schemas.yaml#/components/schemas/UseExceptionListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Use Exceptions
+    post:
+      operationId: requestUseException
+      tags:
+      - Use
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./use.schemas.yaml#/components/schemas/UseExceptionCreate
+      responses:
+        '201':
+          description: Exception requested for risk committee decision
+          content:
+            application/json:
+              schema:
+                $ref: ./use.schemas.yaml#/components/schemas/UseExceptionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Request Use Exception
+  /v1/use-exceptions/{exceptionId}/authorise:
+    parameters:
+    - $ref: ./use.schemas.yaml#/components/parameters/ExceptionId
+    post:
+      operationId: authoriseUseException
+      tags:
+      - Use
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - decision
+              - expiry
+              - compensatingConditions
+              properties:
+                decision:
+                  type: string
+                  enum:
+                  - authorised
+                  - refused
+                expiry:
+                  type: string
+                  format: date-time
+                compensatingConditions:
+                  type: array
+                  items:
+                    type: string
+                committeeReference:
+                  type: string
+      responses:
+        '200':
+          description: Exception decided
+          content:
+            application/json:
+              schema:
+                $ref: ./use.schemas.yaml#/components/schemas/UseExceptionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      x-dynamodb:
+        entityType: USE_EXCEPTION
+        pkPatternTemplate: USE_EXCEPTION#${exceptionId}
+        skPatternTemplate: METADATA
+      summary: Authorise Use Exception
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

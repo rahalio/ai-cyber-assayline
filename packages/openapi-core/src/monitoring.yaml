@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: Assayline — Monitoring API
+  version: 0.1.0
+  description: Owner obligations, breaches, and revalidation triggers
+  license:
+    name: Proprietary
+    url: https://assayline.local/license
+  x-domain: mon
+  x-product-slug: assayline
+  x-maturity: draft
+servers:
+- url: https://api.assayline.local
+  description: Local / starter API
+security:
+- apiKey: []
+- bearerAuth: []
+tags:
+- name: Monitoring
+  description: Owner obligations, breaches, and revalidation triggers
+paths:
+  /v1/monitoring/obligations:
+    get:
+      operationId: listMonitoringObligations
+      tags:
+      - Monitoring
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      - name: modelId
+        in: query
+        schema:
+          type: string
+      - name: inBreach
+        in: query
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Monitoring obligations page
+          content:
+            application/json:
+              schema:
+                $ref: ./monitoring.schemas.yaml#/components/schemas/MonitoringObligationListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Monitoring Obligations
+    post:
+      operationId: assignMonitoringObligation
+      tags:
+      - Monitoring
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./monitoring.schemas.yaml#/components/schemas/MonitoringObligationCreate
+      responses:
+        '201':
+          description: Obligation assigned at approval
+          content:
+            application/json:
+              schema:
+                $ref: ./monitoring.schemas.yaml#/components/schemas/MonitoringObligationResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Assign Monitoring Obligation
+  /v1/monitoring/breaches:
+    post:
+      operationId: recordMonitoringBreach
+      tags:
+      - Monitoring
+      security:
+      - apiKey: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./monitoring.schemas.yaml#/components/schemas/MonitoringBreachCreate
+      responses:
+        '201':
+          description: Breach recorded; revalidation may be triggered
+          content:
+            application/json:
+              schema:
+                $ref: ./monitoring.schemas.yaml#/components/schemas/MonitoringBreachResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      x-dynamodb:
+        entityType: MONITORING_BREACH
+        pkPatternTemplate: MONITORING_BREACH#${breachId}
+        skPatternTemplate: METADATA
+      summary: Record Monitoring Breach
+  /v1/revalidation-triggers:
+    get:
+      operationId: listRevalidationTriggers
+      tags:
+      - Monitoring
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      responses:
+        '200':
+          description: Revalidation triggers page
+          content:
+            application/json:
+              schema:
+                $ref: ./monitoring.schemas.yaml#/components/schemas/RevalidationTriggerListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Revalidation Triggers
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

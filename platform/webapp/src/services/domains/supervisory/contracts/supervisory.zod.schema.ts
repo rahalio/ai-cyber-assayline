@@ -1,0 +1,33 @@
+/**
+ * Supervisory Domain Contracts
+ *
+ * Re-exports Zod schemas from @assayline/core for runtime validation.
+ * This avoids duplication and ensures alignment with the API contract.
+ *
+ * Architecture:
+ * - Single source of truth: @assayline/core
+ * - No code duplication or drift
+ * - Runtime validation of API responses
+ * - Used in services to validate responses
+ *
+ * @see @assayline/core/supervisory for the source schemas
+ */
+
+import { supervisorySchemas as coreSupervisorySchemas } from "@assayline/core/supervisory";
+import type { z } from "zod";
+
+/**
+ * Re-export schemas from core
+ * These are the same schemas used by the api-server, ensuring perfect alignment
+ */
+export const {
+  // TODO: Add specific schema exports based on OpenAPI spec
+  // ResponseMeta,
+  // PageInfo,
+  // etc.
+} = coreSupervisorySchemas;
+
+/**
+ * Export all schemas as a namespace for convenience
+ */
+export const supervisorySchemas = coreSupervisorySchemas;

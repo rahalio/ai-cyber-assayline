@@ -1,0 +1,207 @@
+openapi: 3.1.0
+info:
+  title: Inventory API schemas
+  version: 0.1.0
+  description: Schemas for Assayline inventory domain.
+paths: {}
+components:
+  parameters:
+    ModelId:
+      name: modelId
+      in: path
+      required: true
+      schema:
+        type: string
+    ArtefactId:
+      name: artefactId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    ArtefactCreate:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+        ownerFunction:
+          type: string
+        sourceSystem:
+          type: string
+        description:
+          type: string
+    Artefact:
+      type: object
+      required:
+      - id
+      - name
+      - determinationStatus
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ownerFunction:
+          type: string
+        determinationStatus:
+          type: string
+          enum:
+          - model
+          - not_model
+          - pending
+        sourceSystem:
+          type: string
+    ModelDetermination:
+      type: object
+      required:
+      - id
+      - artefactId
+      - outcome
+      - determinedBy
+      - determinedAt
+      properties:
+        id:
+          type: string
+        artefactId:
+          type: string
+        outcome:
+          type: string
+          enum:
+          - model
+          - not_model
+        criteriaApplied:
+          type: array
+          items:
+            type: string
+        rationale:
+          type: string
+        determinedBy:
+          type: string
+        determinedAt:
+          type: string
+          format: date-time
+        appealPath:
+          type: string
+    ModelDeterminationCreate:
+      type: object
+      required:
+      - outcome
+      - criteriaApplied
+      - rationale
+      properties:
+        outcome:
+          type: string
+          enum:
+          - model
+          - not_model
+        criteriaApplied:
+          type: array
+          items:
+            type: string
+        rationale:
+          type: string
+    ModelDeterminationResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ModelDetermination'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ArtefactListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artefact'
+    ArtefactListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ArtefactListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ModelListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+    ModelListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ModelListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ModelResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Model'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ArtefactResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Artefact'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    Model:
+      type: object
+      required:
+      - id
+      - name
+      - status
+      - tier
+      properties:
+        id:
+          type: string
+        artefactId:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - inventory
+          - queued
+          - in_validation
+          - approved
+          - constrained
+          - retired
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+        ownerId:
+          type: string
+        developerTeamId:
+          type: string
+        intendedUse:
+          type: string
+        regulatoryImpact:
+          type: string
+          enum:
+          - none
+          - low
+          - material
+          - capital_relevant

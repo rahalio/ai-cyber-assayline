@@ -1,0 +1,111 @@
+openapi: 3.1.0
+info:
+  title: Conservatism API schemas
+  version: 0.1.0
+  description: Schemas for Assayline conservatism domain.
+paths: {}
+components:
+  schemas:
+    ConservatismAggregate:
+      type: object
+      properties:
+        totalExplicitConservatism:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        overlayCount:
+          type: integer
+        awaitingReviewCount:
+          type: integer
+        byTier:
+          type: object
+          additionalProperties:
+            $ref: ./common/primitives.yaml#/components/schemas/Money
+        capitalReleaseCandidate:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+    ConservatismOverlay:
+      type: object
+      required:
+      - id
+      - modelId
+      - location
+      - magnitude
+      - status
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        location:
+          type: string
+          description: Named component or parameter where conservatism sits
+        magnitude:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        rationale:
+          type: string
+        status:
+          type: string
+          enum:
+          - declared
+          - approved
+          - under_review
+          - removed
+        approverId:
+          type: string
+        reviewDate:
+          type: string
+          format: date
+    ConservatismOverlayListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConservatismOverlay'
+    ConservatismOverlayListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ConservatismOverlayListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ConservatismAggregateResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ConservatismAggregate'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    ConservatismOverlayCreate:
+      type: object
+      required:
+      - modelId
+      - location
+      - magnitude
+      - rationale
+      - reviewDate
+      properties:
+        modelId:
+          type: string
+        location:
+          type: string
+        magnitude:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        rationale:
+          type: string
+        reviewDate:
+          type: string
+          format: date
+    ConservatismOverlayResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/ConservatismOverlay'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

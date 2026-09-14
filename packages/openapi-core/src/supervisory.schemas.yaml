@@ -1,0 +1,145 @@
+openapi: 3.1.0
+info:
+  title: Supervisory API schemas
+  version: 0.1.0
+  description: Schemas for Assayline supervisory domain.
+paths: {}
+components:
+  parameters:
+    PackId:
+      name: packId
+      in: path
+      required: true
+      schema:
+        type: string
+    AddOnId:
+      name: addOnId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    SupervisoryAddOn:
+      type: object
+      required:
+      - id
+      - amount
+      - status
+      properties:
+        id:
+          type: string
+        amount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        status:
+          type: string
+          enum:
+          - open
+          - remediating
+          - reduced
+          - closed
+        imposedAt:
+          type: string
+          format: date-time
+        attributedCause:
+          type: string
+        remediationPlan:
+          $ref: '#/components/schemas/RemediationPlan'
+        measuredReduction:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+    SupervisoryPackResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/SupervisoryPack'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    SupervisoryAddOnListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupervisoryAddOn'
+    SupervisoryAddOnListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/SupervisoryAddOnListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    SupervisoryAddOnResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/SupervisoryAddOn'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    RemediationPlan:
+      type: object
+      required:
+      - actions
+      - targetReduction
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+        ownerId:
+          type: string
+        targetDate:
+          type: string
+          format: date
+        targetReduction:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        progressNotes:
+          type: string
+    SupervisoryPack:
+      type: object
+      required:
+      - id
+      - scope
+      - assembledAt
+      properties:
+        id:
+          type: string
+        scope:
+          type: string
+          enum:
+          - full_estate
+          - regulatory_models
+          - material_models
+        assembledAt:
+          type: string
+          format: date-time
+        examinationReference:
+          type: string
+        includedModelCount:
+          type: integer
+        openFindingsCount:
+          type: integer
+        aggregateModelRisk:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        packUri:
+          type: string
+          format: uri
+    SupervisoryAddOnCreate:
+      type: object
+      required:
+      - amount
+      - attributedCause
+      properties:
+        amount:
+          $ref: ./common/primitives.yaml#/components/schemas/Money
+        attributedCause:
+          type: string
+        imposedAt:
+          type: string
+          format: date-time

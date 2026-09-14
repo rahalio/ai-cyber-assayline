@@ -1,0 +1,542 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const assignMonitoringObligation_Body = z
+  .object({
+    modelId: z.string(),
+    ownerId: z.string(),
+    developerTeamId: z.string().optional(),
+    metric: z.string(),
+    threshold: z.number(),
+    revalidationOnBreach: z.boolean().optional().default(true),
+  })
+  .passthrough();
+const recordMonitoringBreach_Body = z
+  .object({
+    obligationId: z.string(),
+    observedValue: z.number(),
+    breachedAt: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const MonitoringObligation = z
+  .object({
+    id: z.string(),
+    modelId: z.string(),
+    ownerId: z.string(),
+    developerTeamId: z.string().optional(),
+    metric: z.string(),
+    threshold: z.number(),
+    inBreach: z.boolean().optional(),
+    revalidationOnBreach: z.boolean().optional(),
+  })
+  .passthrough();
+const MonitoringObligationListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          id: z.string(),
+          modelId: z.string(),
+          ownerId: z.string(),
+          developerTeamId: z.string().optional(),
+          metric: z.string(),
+          threshold: z.number(),
+          inBreach: z.boolean().optional(),
+          revalidationOnBreach: z.boolean().optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+    timestamp: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const MonitoringObligationListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              id: z.string(),
+              modelId: z.string(),
+              ownerId: z.string(),
+              developerTeamId: z.string().optional(),
+              metric: z.string(),
+              threshold: z.number(),
+              inBreach: z.boolean().optional(),
+              revalidationOnBreach: z.boolean().optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const MonitoringObligationCreate = z
+  .object({
+    modelId: z.string(),
+    ownerId: z.string(),
+    developerTeamId: z.string().optional(),
+    metric: z.string(),
+    threshold: z.number(),
+    revalidationOnBreach: z.boolean().optional().default(true),
+  })
+  .passthrough();
+const MonitoringObligationResponse = z
+  .object({
+    data: z
+      .object({
+        id: z.string(),
+        modelId: z.string(),
+        ownerId: z.string(),
+        developerTeamId: z.string().optional(),
+        metric: z.string(),
+        threshold: z.number(),
+        inBreach: z.boolean().optional(),
+        revalidationOnBreach: z.boolean().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const MonitoringBreachCreate = z
+  .object({
+    obligationId: z.string(),
+    observedValue: z.number(),
+    breachedAt: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const MonitoringBreach = z
+  .object({
+    id: z.string(),
+    obligationId: z.string(),
+    modelId: z.string().optional(),
+    observedValue: z.number(),
+    breachedAt: z.string().datetime({ offset: true }),
+    revalidationTriggered: z.boolean().optional(),
+  })
+  .passthrough();
+const MonitoringBreachResponse = z
+  .object({
+    data: z
+      .object({
+        id: z.string(),
+        obligationId: z.string(),
+        modelId: z.string().optional(),
+        observedValue: z.number(),
+        breachedAt: z.string().datetime({ offset: true }),
+        revalidationTriggered: z.boolean().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const RevalidationTrigger = z
+  .object({
+    id: z.string(),
+    modelId: z.string(),
+    reason: z.enum([
+      'monitoring_breach',
+      'change_of_use',
+      'exception_expiry',
+      'scheduled',
+      'supervisory',
+    ]),
+    status: z.enum(['open', 'queued', 'in_progress', 'completed']),
+    triggeredAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const RevalidationTriggerListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          id: z.string(),
+          modelId: z.string(),
+          reason: z.enum([
+            'monitoring_breach',
+            'change_of_use',
+            'exception_expiry',
+            'scheduled',
+            'supervisory',
+          ]),
+          status: z.enum(['open', 'queued', 'in_progress', 'completed']),
+          triggeredAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const RevalidationTriggerListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              id: z.string(),
+              modelId: z.string(),
+              reason: z.enum([
+                'monitoring_breach',
+                'change_of_use',
+                'exception_expiry',
+                'scheduled',
+                'supervisory',
+              ]),
+              status: z.enum(['open', 'queued', 'in_progress', 'completed']),
+              triggeredAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  assignMonitoringObligation_Body,
+  recordMonitoringBreach_Body,
+  MonitoringObligation,
+  MonitoringObligationListData,
+  ResponseMeta,
+  MonitoringObligationListResponse,
+  Problem,
+  MonitoringObligationCreate,
+  MonitoringObligationResponse,
+  MonitoringBreachCreate,
+  MonitoringBreach,
+  MonitoringBreachResponse,
+  RevalidationTrigger,
+  RevalidationTriggerListData,
+  RevalidationTriggerListResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'post',
+    path: '/v1/monitoring/breaches',
+    alias: 'recordMonitoringBreach',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: recordMonitoringBreach_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            obligationId: z.string(),
+            modelId: z.string().optional(),
+            observedValue: z.number(),
+            breachedAt: z.string().datetime({ offset: true }),
+            revalidationTriggered: z.boolean().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/monitoring/obligations',
+    alias: 'listMonitoringObligations',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: 'modelId',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'inBreach',
+        type: 'Query',
+        schema: z.boolean().optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  id: z.string(),
+                  modelId: z.string(),
+                  ownerId: z.string(),
+                  developerTeamId: z.string().optional(),
+                  metric: z.string(),
+                  threshold: z.number(),
+                  inBreach: z.boolean().optional(),
+                  revalidationOnBreach: z.boolean().optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/monitoring/obligations',
+    alias: 'assignMonitoringObligation',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: assignMonitoringObligation_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string(),
+            ownerId: z.string(),
+            developerTeamId: z.string().optional(),
+            metric: z.string(),
+            threshold: z.number(),
+            inBreach: z.boolean().optional(),
+            revalidationOnBreach: z.boolean().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/revalidation-triggers',
+    alias: 'listRevalidationTriggers',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  id: z.string(),
+                  modelId: z.string(),
+                  reason: z.enum([
+                    'monitoring_breach',
+                    'change_of_use',
+                    'exception_expiry',
+                    'scheduled',
+                    'supervisory',
+                  ]),
+                  status: z.enum([
+                    'open',
+                    'queued',
+                    'in_progress',
+                    'completed',
+                  ]),
+                  triggeredAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

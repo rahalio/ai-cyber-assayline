@@ -1,0 +1,219 @@
+openapi: 3.1.0
+info:
+  title: Assayline — Validation API
+  version: 0.1.0
+  description: Calendar, engagements, tasks, and work placement
+  license:
+    name: Proprietary
+    url: https://assayline.local/license
+  x-domain: val
+  x-product-slug: assayline
+  x-maturity: draft
+servers:
+- url: https://api.assayline.local
+  description: Local / starter API
+security:
+- apiKey: []
+- bearerAuth: []
+tags:
+- name: Validation
+  description: Calendar, engagements, tasks, and work placement
+paths:
+  /v1/validation/slots:
+    get:
+      operationId: listValidationSlots
+      tags:
+      - Validation
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - open
+          - allocated
+          - deferred
+          - released
+      responses:
+        '200':
+          description: Validation calendar slots
+          content:
+            application/json:
+              schema:
+                $ref: ./validation.schemas.yaml#/components/schemas/ValidationSlotListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Validation Slots
+    post:
+      operationId: allocateValidationSlot
+      tags:
+      - Validation
+      description: Allocate a slot only when the submission is accepted. Refuses allocation for gapped
+        or returned submissions.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./validation.schemas.yaml#/components/schemas/ValidationSlotAllocate
+      responses:
+        '201':
+          description: Slot allocated
+          content:
+            application/json:
+              schema:
+                $ref: ./validation.schemas.yaml#/components/schemas/ValidationSlotResponse
+        '409':
+          description: Submission not accepted or capacity unavailable
+          content:
+            application/json:
+              schema:
+                $ref: ./common/problem.yaml#/components/schemas/Problem
+      x-dynamodb:
+        entityType: VALIDATION_SLOT
+        pkPatternTemplate: VALIDATION_SLOT#${slotId}
+        skPatternTemplate: METADATA
+      summary: Allocate Validation Slot
+  /v1/validation/engagements:
+    get:
+      operationId: listValidationEngagements
+      tags:
+      - Validation
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      - name: modelId
+        in: query
+        schema:
+          type: string
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - planned
+          - in_progress
+          - completed
+          - aborted
+      responses:
+        '200':
+          description: Validation engagements page
+          content:
+            application/json:
+              schema:
+                $ref: ./validation.schemas.yaml#/components/schemas/ValidationEngagementListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Validation Engagements
+    post:
+      operationId: createValidationEngagement
+      tags:
+      - Validation
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./validation.schemas.yaml#/components/schemas/ValidationEngagementCreate
+      responses:
+        '201':
+          description: Engagement created with tiered playbook
+          content:
+            application/json:
+              schema:
+                $ref: ./validation.schemas.yaml#/components/schemas/ValidationEngagementResponse
+        '403':
+          description: Independence separation would be violated
+          content:
+            application/json:
+              schema:
+                $ref: ./common/problem.yaml#/components/schemas/Problem
+      x-dynamodb:
+        entityType: VALIDATION_ENGAGEMENT
+        pkPatternTemplate: VALIDATION_ENGAGEMENT#${engagementId}
+        skPatternTemplate: METADATA
+      summary: Create Validation Engagement
+  /v1/validation/engagements/{engagementId}/tasks:
+    parameters:
+    - $ref: ./validation.schemas.yaml#/components/parameters/EngagementId
+    get:
+      operationId: listValidationTasks
+      tags:
+      - Validation
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Tasks for the engagement
+          content:
+            application/json:
+              schema:
+                $ref: ./validation.schemas.yaml#/components/schemas/ValidationTaskListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Validation Tasks
+    post:
+      operationId: placeValidationTask
+      tags:
+      - Validation
+      description: Route a decomposable task onshore, offshore, or externally with a recorded data-sensitivity
+        basis and unit cost.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./validation.schemas.yaml#/components/schemas/ValidationTaskCreate
+      responses:
+        '201':
+          description: Task placed
+          content:
+            application/json:
+              schema:
+                $ref: ./validation.schemas.yaml#/components/schemas/ValidationTaskResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Place Validation Task
+  /v1/validation/capacity-forecast:
+    get:
+      operationId: getCapacityForecast
+      tags:
+      - Validation
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: horizonQuarters
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 8
+          default: 4
+      responses:
+        '200':
+          description: Estate growth set against validator capacity
+          content:
+            application/json:
+              schema:
+                $ref: ./validation.schemas.yaml#/components/schemas/CapacityForecastResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Get Capacity Forecast
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

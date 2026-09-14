@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Tiering API schemas
+  version: 0.1.0
+  description: Schemas for Assayline tiering domain.
+paths: {}
+components:
+  parameters:
+    ModelId:
+      name: modelId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    TierAssessmentCreate:
+      type: object
+      required:
+      - tier
+      - scores
+      - rationale
+      properties:
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+        scores:
+          type: object
+          additionalProperties:
+            type: number
+        rationale:
+          type: string
+    TierAssessment:
+      type: object
+      required:
+      - id
+      - modelId
+      - tier
+      - assessedAt
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 3
+        scores:
+          type: object
+          additionalProperties:
+            type: number
+        rationale:
+          type: string
+        assessedBy:
+          type: string
+        assessedAt:
+          type: string
+          format: date-time
+        playbookId:
+          type: string
+    TierAssessmentResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/TierAssessment'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    TierCriteria:
+      type: object
+      required:
+      - version
+      - dimensions
+      properties:
+        version:
+          type: string
+        dimensions:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - weight
+            properties:
+              name:
+                type: string
+                enum:
+                - materiality
+                - potential_loss
+                - parameter_uncertainty
+                - regulatory_impact
+                - intended_use
+              weight:
+                type: number
+                format: float
+        ownedByControlUnit:
+          type: boolean
+        effectiveFrom:
+          type: string
+          format: date-time
+    TierAssessmentListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TierAssessment'
+    TierAssessmentListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/TierAssessmentListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    TierCriteriaResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/TierCriteria'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

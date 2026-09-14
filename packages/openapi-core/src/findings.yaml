@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Assayline — Findings API
+  version: 0.1.0
+  description: Severity-graded findings and automatic use constraints
+  license:
+    name: Proprietary
+    url: https://assayline.local/license
+  x-domain: fnd
+  x-product-slug: assayline
+  x-maturity: draft
+servers:
+- url: https://api.assayline.local
+  description: Local / starter API
+security:
+- apiKey: []
+- bearerAuth: []
+tags:
+- name: Findings
+  description: Severity-graded findings and automatic use constraints
+paths:
+  /v1/findings:
+    get:
+      operationId: listFindings
+      tags:
+      - Findings
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      - name: modelId
+        in: query
+        schema:
+          type: string
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - open
+          - constrained
+          - closed
+      - name: minSeverity
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+      responses:
+        '200':
+          description: Findings page
+          content:
+            application/json:
+              schema:
+                $ref: ./findings.schemas.yaml#/components/schemas/FindingListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Findings
+    post:
+      operationId: raiseFinding
+      tags:
+      - Findings
+      description: Raise a severity-graded finding. Above the configured severity for the model's tier,
+        permitted use is automatically restricted until closure.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./findings.schemas.yaml#/components/schemas/FindingCreate
+      responses:
+        '201':
+          description: Finding raised; use constraint may be applied
+          content:
+            application/json:
+              schema:
+                $ref: ./findings.schemas.yaml#/components/schemas/FindingResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      x-dynamodb:
+        entityType: FINDING
+        pkPatternTemplate: FINDING#${findingId}
+        skPatternTemplate: METADATA
+      summary: Raise Finding
+  /v1/findings/{findingId}/close:
+    parameters:
+    - $ref: ./findings.schemas.yaml#/components/parameters/FindingId
+    post:
+      operationId: closeFinding
+      tags:
+      - Findings
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - closureRationale
+              properties:
+                closureRationale:
+                  type: string
+                releaseConstraint:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Finding closed
+          content:
+            application/json:
+              schema:
+                $ref: ./findings.schemas.yaml#/components/schemas/FindingResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Close Finding
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

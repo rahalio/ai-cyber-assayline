@@ -1,0 +1,42 @@
+apis:
+  identity:
+    root: src/identity.yaml
+  inventory:
+    root: src/inventory.yaml
+  tiering:
+    root: src/tiering.yaml
+  submissions:
+    root: src/submissions.yaml
+  validation:
+    root: src/validation.yaml
+  findings:
+    root: src/findings.yaml
+  conservatism:
+    root: src/conservatism.yaml
+  use:
+    root: src/use.yaml
+  monitoring:
+    root: src/monitoring.yaml
+  quantification:
+    root: src/quantification.yaml
+  supervisory:
+    root: src/supervisory.yaml
+
+extends:
+  - recommended
+
+rules:
+  no-unused-components: off
+  operation-4xx-response: warn
+  info-license: off
+  info-license-url: off
+  tag-description: off
+  operation-operationId: error
+  operation-summary: warn
+  security-defined: error
+  no-invalid-media-type-examples: off
+
+theme:
+  openapi:
+    generateCodeSamples:
+      languages: []

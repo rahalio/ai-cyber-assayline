@@ -1,0 +1,127 @@
+openapi: 3.1.0
+info:
+  title: Permitted Use API schemas
+  version: 0.1.0
+  description: Schemas for Assayline use domain.
+paths: {}
+components:
+  parameters:
+    ExceptionId:
+      name: exceptionId
+      in: path
+      required: true
+      schema:
+        type: string
+    ModelId:
+      name: modelId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    UseExceptionListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UseException'
+    UseExceptionListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/UseExceptionListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    PermittedUseResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/PermittedUse'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    UseExceptionResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/UseException'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    PermittedUse:
+      type: object
+      required:
+      - modelId
+      - allowedDecisions
+      properties:
+        modelId:
+          type: string
+        allowedDecisions:
+          type: array
+          items:
+            type: string
+        prohibitedDecisions:
+          type: array
+          items:
+            type: string
+        constraints:
+          type: array
+          items:
+            type: string
+        effectiveFrom:
+          type: string
+          format: date-time
+    UseExceptionCreate:
+      type: object
+      required:
+      - modelId
+      - requestedUse
+      - businessJustification
+      properties:
+        modelId:
+          type: string
+        requestedUse:
+          type: string
+        businessJustification:
+          type: string
+        proposedExpiry:
+          type: string
+          format: date-time
+    UseException:
+      type: object
+      required:
+      - id
+      - modelId
+      - requestedUse
+      - status
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        requestedUse:
+          type: string
+        status:
+          type: string
+          enum:
+          - requested
+          - authorised
+          - expired
+          - breached
+          - refused
+        expiry:
+          type: string
+          format: date-time
+        compensatingConditions:
+          type: array
+          items:
+            type: string
+        committeeReference:
+          type: string

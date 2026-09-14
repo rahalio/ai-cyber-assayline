@@ -1,0 +1,496 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const createSubmission_Body = z
+  .object({
+    modelId: z.string(),
+    submittingFunction: z.string(),
+    componentsPresent: z.array(z.string()).optional(),
+    feederModelIds: z.array(z.string()).optional(),
+  })
+  .passthrough();
+const returnSubmission_Body = z
+  .object({
+    missingComponents: z.array(z.string()),
+    attributedTo: z.string(),
+    notes: z.string().optional(),
+  })
+  .passthrough();
+const Submission = z
+  .object({
+    id: z.string(),
+    modelId: z.string(),
+    status: z.enum(['received', 'gapped', 'returned', 'accepted']),
+    submittingFunction: z.string(),
+    missingComponents: z
+      .array(
+        z.enum([
+          'data',
+          'feeder_models',
+          'monitoring_plan',
+          'documentation',
+          'prior_findings',
+        ])
+      )
+      .optional(),
+    returnCount: z.number().int().optional(),
+    acceptedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const SubmissionListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          id: z.string(),
+          modelId: z.string(),
+          status: z.enum(['received', 'gapped', 'returned', 'accepted']),
+          submittingFunction: z.string(),
+          missingComponents: z
+            .array(
+              z.enum([
+                'data',
+                'feeder_models',
+                'monitoring_plan',
+                'documentation',
+                'prior_findings',
+              ])
+            )
+            .optional(),
+          returnCount: z.number().int().optional(),
+          acceptedAt: z.string().datetime({ offset: true }).optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+    timestamp: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const SubmissionListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              id: z.string(),
+              modelId: z.string(),
+              status: z.enum(['received', 'gapped', 'returned', 'accepted']),
+              submittingFunction: z.string(),
+              missingComponents: z
+                .array(
+                  z.enum([
+                    'data',
+                    'feeder_models',
+                    'monitoring_plan',
+                    'documentation',
+                    'prior_findings',
+                  ])
+                )
+                .optional(),
+              returnCount: z.number().int().optional(),
+              acceptedAt: z.string().datetime({ offset: true }).optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const SubmissionCreate = z
+  .object({
+    modelId: z.string(),
+    submittingFunction: z.string(),
+    componentsPresent: z.array(z.string()).optional(),
+    feederModelIds: z.array(z.string()).optional(),
+  })
+  .passthrough();
+const SubmissionResponse = z
+  .object({
+    data: z
+      .object({
+        id: z.string(),
+        modelId: z.string(),
+        status: z.enum(['received', 'gapped', 'returned', 'accepted']),
+        submittingFunction: z.string(),
+        missingComponents: z
+          .array(
+            z.enum([
+              'data',
+              'feeder_models',
+              'monitoring_plan',
+              'documentation',
+              'prior_findings',
+            ])
+          )
+          .optional(),
+        returnCount: z.number().int().optional(),
+        acceptedAt: z.string().datetime({ offset: true }).optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+        timestamp: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const SubmissionReturnCreate = z
+  .object({
+    missingComponents: z.array(z.string()),
+    attributedTo: z.string(),
+    notes: z.string().optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  createSubmission_Body,
+  returnSubmission_Body,
+  Submission,
+  SubmissionListData,
+  ResponseMeta,
+  SubmissionListResponse,
+  Problem,
+  SubmissionCreate,
+  SubmissionResponse,
+  SubmissionReturnCreate,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/submissions',
+    alias: 'listSubmissions',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: 'status',
+        type: 'Query',
+        schema: z
+          .enum(['received', 'gapped', 'returned', 'accepted'])
+          .optional(),
+      },
+      {
+        name: 'submittingFunction',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  id: z.string(),
+                  modelId: z.string(),
+                  status: z.enum([
+                    'received',
+                    'gapped',
+                    'returned',
+                    'accepted',
+                  ]),
+                  submittingFunction: z.string(),
+                  missingComponents: z
+                    .array(
+                      z.enum([
+                        'data',
+                        'feeder_models',
+                        'monitoring_plan',
+                        'documentation',
+                        'prior_findings',
+                      ])
+                    )
+                    .optional(),
+                  returnCount: z.number().int().optional(),
+                  acceptedAt: z.string().datetime({ offset: true }).optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/submissions',
+    alias: 'createSubmission',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: createSubmission_Body,
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string(),
+            status: z.enum(['received', 'gapped', 'returned', 'accepted']),
+            submittingFunction: z.string(),
+            missingComponents: z
+              .array(
+                z.enum([
+                  'data',
+                  'feeder_models',
+                  'monitoring_plan',
+                  'documentation',
+                  'prior_findings',
+                ])
+              )
+              .optional(),
+            returnCount: z.number().int().optional(),
+            acceptedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 422,
+        description: `Semantically invalid request (e.g. PACK_EMPTY)`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/submissions/:submissionId/completeness-check',
+    alias: 'checkSubmissionCompleteness',
+    description: `Re-run the published completeness standard. Incomplete submissions do not receive a validation slot; returns are attributed to the submitting function with missing components named.`,
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'submissionId',
+        type: 'Path',
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string(),
+            status: z.enum(['received', 'gapped', 'returned', 'accepted']),
+            submittingFunction: z.string(),
+            missingComponents: z
+              .array(
+                z.enum([
+                  'data',
+                  'feeder_models',
+                  'monitoring_plan',
+                  'documentation',
+                  'prior_findings',
+                ])
+              )
+              .optional(),
+            returnCount: z.number().int().optional(),
+            acceptedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/submissions/:submissionId/return',
+    alias: 'returnSubmission',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: returnSubmission_Body,
+      },
+      {
+        name: 'submissionId',
+        type: 'Path',
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string(),
+            modelId: z.string(),
+            status: z.enum(['received', 'gapped', 'returned', 'accepted']),
+            submittingFunction: z.string(),
+            missingComponents: z
+              .array(
+                z.enum([
+                  'data',
+                  'feeder_models',
+                  'monitoring_plan',
+                  'documentation',
+                  'prior_findings',
+                ])
+              )
+              .optional(),
+            returnCount: z.number().int().optional(),
+            acceptedAt: z.string().datetime({ offset: true }).optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+            timestamp: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

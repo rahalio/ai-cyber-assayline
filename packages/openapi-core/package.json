@@ -1,0 +1,18 @@
+{
+  "name": "@assayline/openapi-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenAPI contracts for Assayline (common + identity + product domains)",
+  "scripts": {
+    "lint:domains": "redocly lint",
+    "bundle:domains": "mkdir -p src/.bundled && redocly bundle identity --output src/.bundled/identity.openapi.yaml && redocly bundle identity --output src/.bundled/identity.json && redocly bundle inventory --output src/.bundled/inventory.openapi.yaml && redocly bundle inventory --output src/.bundled/inventory.json && redocly bundle tiering --output src/.bundled/tiering.openapi.yaml && redocly bundle tiering --output src/.bundled/tiering.json && redocly bundle submissions --output src/.bundled/submissions.openapi.yaml && redocly bundle submissions --output src/.bundled/submissions.json && redocly bundle validation --output src/.bundled/validation.openapi.yaml && redocly bundle validation --output src/.bundled/validation.json && redocly bundle findings --output src/.bundled/findings.openapi.yaml && redocly bundle findings --output src/.bundled/findings.json && redocly bundle conservatism --output src/.bundled/conservatism.openapi.yaml && redocly bundle conservatism --output src/.bundled/conservatism.json && redocly bundle use --output src/.bundled/use.openapi.yaml && redocly bundle use --output src/.bundled/use.json && redocly bundle monitoring --output src/.bundled/monitoring.openapi.yaml && redocly bundle monitoring --output src/.bundled/monitoring.json && redocly bundle quantification --output src/.bundled/quantification.openapi.yaml && redocly bundle quantification --output src/.bundled/quantification.json && redocly bundle supervisory --output src/.bundled/supervisory.openapi.yaml && redocly bundle supervisory --output src/.bundled/supervisory.json",
+    "lint": "pnpm run lint:domains",
+    "bundle": "pnpm run bundle:domains"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.34.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

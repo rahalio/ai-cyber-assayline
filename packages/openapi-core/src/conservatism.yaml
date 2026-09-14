@@ -1,0 +1,101 @@
+openapi: 3.1.0
+info:
+  title: Assayline — Conservatism API
+  version: 0.1.0
+  description: Explicit conservatism overlays and estate aggregation
+  license:
+    name: Proprietary
+    url: https://assayline.local/license
+  x-domain: cns
+  x-product-slug: assayline
+  x-maturity: draft
+servers:
+- url: https://api.assayline.local
+  description: Local / starter API
+security:
+- apiKey: []
+- bearerAuth: []
+tags:
+- name: Conservatism
+  description: Explicit conservatism overlays and estate aggregation
+paths:
+  /v1/conservatism-overlays:
+    get:
+      operationId: listConservatismOverlays
+      tags:
+      - Conservatism
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+      - $ref: ./common/parameters.yaml#/components/parameters/Limit
+      - name: modelId
+        in: query
+        schema:
+          type: string
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - declared
+          - approved
+          - under_review
+          - removed
+      responses:
+        '200':
+          description: Conservatism overlays page
+          content:
+            application/json:
+              schema:
+                $ref: ./conservatism.schemas.yaml#/components/schemas/ConservatismOverlayListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: List Conservatism Overlays
+    post:
+      operationId: declareConservatismOverlay
+      tags:
+      - Conservatism
+      description: Record explicit conservatism at a named model location with magnitude, rationale, approver,
+        and review date. Models may not be approved with material undocumented conservatism.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./conservatism.schemas.yaml#/components/schemas/ConservatismOverlayCreate
+      responses:
+        '201':
+          description: Overlay declared
+          content:
+            application/json:
+              schema:
+                $ref: ./conservatism.schemas.yaml#/components/schemas/ConservatismOverlayResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Declare Conservatism Overlay
+  /v1/conservatism-overlays/aggregate:
+    get:
+      operationId: getConservatismAggregate
+      tags:
+      - Conservatism
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estate-level explicit conservatism priced for capital decisions
+          content:
+            application/json:
+              schema:
+                $ref: ./conservatism.schemas.yaml#/components/schemas/ConservatismAggregateResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+      summary: Get Conservatism Aggregate
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey
+    bearerAuth:
+      $ref: ./common/security.yaml#/components/securitySchemes/bearerAuth

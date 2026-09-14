@@ -1,0 +1,102 @@
+openapi: 3.1.0
+info:
+  title: Findings API schemas
+  version: 0.1.0
+  description: Schemas for Assayline findings domain.
+paths: {}
+components:
+  parameters:
+    FindingId:
+      name: findingId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    FindingCreate:
+      type: object
+      required:
+      - modelId
+      - engagementId
+      - severity
+      - description
+      properties:
+        modelId:
+          type: string
+        engagementId:
+          type: string
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        description:
+          type: string
+        applyUseConstraint:
+          type: boolean
+          default: true
+    FindingResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Finding'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    Finding:
+      type: object
+      required:
+      - id
+      - modelId
+      - severity
+      - status
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        engagementId:
+          type: string
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        status:
+          type: string
+          enum:
+          - open
+          - constrained
+          - closed
+        description:
+          type: string
+        useConstraintApplied:
+          type: boolean
+        raisedBy:
+          type: string
+        raisedAt:
+          type: string
+          format: date-time
+    FindingListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+    FindingListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/FindingListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

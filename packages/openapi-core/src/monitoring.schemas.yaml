@@ -1,0 +1,177 @@
+openapi: 3.1.0
+info:
+  title: Monitoring API schemas
+  version: 0.1.0
+  description: Schemas for Assayline monitoring domain.
+paths: {}
+components:
+  schemas:
+    MonitoringObligationCreate:
+      type: object
+      required:
+      - modelId
+      - ownerId
+      - metric
+      - threshold
+      properties:
+        modelId:
+          type: string
+        ownerId:
+          type: string
+        developerTeamId:
+          type: string
+        metric:
+          type: string
+        threshold:
+          type: number
+          format: float
+        revalidationOnBreach:
+          type: boolean
+          default: true
+    MonitoringBreachCreate:
+      type: object
+      required:
+      - obligationId
+      - observedValue
+      - breachedAt
+      properties:
+        obligationId:
+          type: string
+        observedValue:
+          type: number
+          format: float
+        breachedAt:
+          type: string
+          format: date-time
+    RevalidationTrigger:
+      type: object
+      required:
+      - id
+      - modelId
+      - reason
+      - status
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        reason:
+          type: string
+          enum:
+          - monitoring_breach
+          - change_of_use
+          - exception_expiry
+          - scheduled
+          - supervisory
+        status:
+          type: string
+          enum:
+          - open
+          - queued
+          - in_progress
+          - completed
+        triggeredAt:
+          type: string
+          format: date-time
+    MonitoringObligationListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitoringObligation'
+    MonitoringObligationListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/MonitoringObligationListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    MonitoringBreachResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/MonitoringBreach'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    MonitoringBreach:
+      type: object
+      required:
+      - id
+      - obligationId
+      - observedValue
+      - breachedAt
+      properties:
+        id:
+          type: string
+        obligationId:
+          type: string
+        modelId:
+          type: string
+        observedValue:
+          type: number
+          format: float
+        breachedAt:
+          type: string
+          format: date-time
+        revalidationTriggered:
+          type: boolean
+    MonitoringObligation:
+      type: object
+      required:
+      - id
+      - modelId
+      - ownerId
+      - metric
+      - threshold
+      properties:
+        id:
+          type: string
+        modelId:
+          type: string
+        ownerId:
+          type: string
+        developerTeamId:
+          type: string
+        metric:
+          type: string
+        threshold:
+          type: number
+          format: float
+        inBreach:
+          type: boolean
+        revalidationOnBreach:
+          type: boolean
+    MonitoringObligationResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/MonitoringObligation'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+    RevalidationTriggerListData:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevalidationTrigger'
+    RevalidationTriggerListResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/RevalidationTriggerListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
